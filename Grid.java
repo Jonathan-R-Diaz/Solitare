@@ -2,10 +2,8 @@ import javax.swing.*;import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import static java.awt.SystemColor.text;
-
-public class Grid extends Game implements ActionListener{
-
+public class Grid extends Executables{
+/*
         public class Button {
             private String fullname;
             private  char r, c;
@@ -23,7 +21,7 @@ public class Grid extends Game implements ActionListener{
                     row = r - 55;
 
                 if (row > table.findFirstCard(col))
-                    row = table.findFirstCard(col);
+                    row = actions.findFirstCard(col);
 
                 initialized = true;
                 isWaste = false;
@@ -62,7 +60,8 @@ public class Grid extends Game implements ActionListener{
 
         Button button1 = new Button();
         Button button2 = new Button();
-
+        Executables actions = new Executables();
+        Table table = new Table();
 
         int counter = 0;
         Grid() {
@@ -185,6 +184,8 @@ public class Grid extends Game implements ActionListener{
             button.setText("[" + i + "][" + j + "]");
             add(button);
         }
+
+ */
 
     }
 

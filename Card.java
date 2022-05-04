@@ -82,7 +82,10 @@ public class Card {
     }
 
     public String getCardName(){
-        return cardName;
+        if (isUp)
+            return cardName;
+        else
+            return cardBack;
     }
 
     public String getSuit(){
