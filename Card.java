@@ -3,7 +3,7 @@ import java.awt.*;
 
 public class Card {
     private int v, s;
-    private String value, suit;
+    private String value, suit, cardName, cardBack;
     private boolean isRed;
     private JLabel front, back, current;
     private boolean isUp;
@@ -40,24 +40,24 @@ public class Card {
         this.s = s;
         switch (s) {
             case 1 -> {
-                suit = "hearts";
+                suit = "Hearts";
                 isRed = true;
                 sc = 2;
             }
             case 2 -> {
-                suit = "diamonds";
+                suit = "Diamonds";
                 isRed = true;
                 sc = 0;
             }
             case 3 -> {
-                suit = "spades*";
+                suit = "Spades*";
                 isRed = false;
                 sc = 1;
             }
             case 4 -> {
-                suit = "clovers*";
+                suit = "Clovers*";
                 isRed = false;
-                sc = 1;
+                sc = 0;
             }
             default -> {
                 suit = "RED";
@@ -65,18 +65,33 @@ public class Card {
                 sc = 5;
             }
         }
+        cardName = (value + " of " + suit);
+        cardBack = "Card is face down";
+
         for (int i = 0; i < sc + vc; i++){
-            suit += ' ';
+            cardName += '_';
         }
+
     }
 
     public void Display(){
         if (isUp)
-            System.out.print(value + " of " + suit);
+            System.out.print(cardName);
         else
-            System.out.print("Card is face down");
+            System.out.print(cardBack);
     }
 
+    public String getCardName(){
+        return cardName;
+    }
+
+    public String getSuit(){
+        return suit;
+    }
+
+    public int getSuitInt(){
+        return s;
+    }
     public void isUp(){
         isUp = true;
     }
@@ -88,4 +103,6 @@ public class Card {
     public boolean isCurrentlyUp(){
         return isUp;
     }
+
+    public boolean isCurrentlyDown(){ return !isUp; }
 }

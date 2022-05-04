@@ -1,12 +1,23 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Objects;
+import java.util.Scanner;
 import java.util.Stack;
 import java.lang.System;
 
-public class Table {
+public class Table extends JFrame{
+
+    Grid GUI;
+    static final int MAX_ROWS = 20;
+    static final int MAX_COLUMNS = 7;
 
     boolean[][] hasCardTop = new boolean[3][6];
-    boolean[][] hasCardTable = new boolean[13][7];
+    boolean[][] hasCardTable = new boolean[MAX_ROWS][MAX_COLUMNS];
 
-    Card[][] cardsOnTable = new Card[13][7];
+    Card[][] cardsOnTable = new Card[MAX_ROWS][MAX_COLUMNS];
+
     Deck deck = new Deck();
 
     Stack<Card> down = new Stack<>();
@@ -22,6 +33,7 @@ public class Table {
     private int downSize = 24;
 
     Table() {
+
         hasCardTop[0][0] = true;
 
         for (int rows = 0; rows < 7; rows++) {
@@ -39,56 +51,16 @@ public class Table {
         down = deck.cardStack;
     }
 
-    public void Draw() {
-        if (!down.isEmpty()) { //IDEAL
-
-            CardPileStackPlusPlus();
-
-            if (hasCardTop[2][1])
-                throwaway.push(up[2]);
-
-            for (int i = 0; i < 3; i++)
-                hasCardTop[i][1] = i < stackSize();
-
-            for (int i = 2; i > 0; i--)
-                up[i] = up[i - 1];
-
-            up[0] = down.peek();
-            up[0].isUp();
-
-            down.pop();
-
-            if (down.isEmpty())
-                hasCardTop[0][0] = false;
-
-            DisplayTable();
-
-        } else { //RESET
-            CardPileReset();
-            hasCardTop[0][0] = true;
-
-            for (int i = 0; i < 3; i++) {
-                throwaway.push(up[i]);
-                up[i] = null;
-                hasCardTop[i][1] = false;
-            }
-
-            int throwawaySize = throwaway.size();
-            updateDownSize(throwawaySize);
-
-            for (int i = 0; i < throwawaySize; i++) {
-                throwaway.peek().isDown();
-                down.push(throwaway.peek());
-                throwaway.pop();
-
-            }
-            throwaway.clear();
-
-            DisplayTable();
+    public int findFirstCard(int col) {
+        int row = 0;
+        while (hasCardTable[row][col]) {
+            row++;
         }
+        row--;
+        return row;
     }
 
-    public void DisplayTable() {
+    public void DisplayTableOld() {
         //Initalizing longbar
         String longbar = "";
         for (int i = 0; i < 137; i++)
@@ -122,29 +94,44 @@ public class Table {
 
             System.out.print("\t\t\t\t\t\t");
         }//stack and overflow
+
         {
-            if (!hasCardTop[0][2])
-                System.out.print("EMPTY\t\t\t\t");
-            else
+            if (hasCardTop[0][2]) {
                 hearts.peek().Display();
-
-            if (!hasCardTop[0][3])
+                System.out.print("\t");
+            }
+            else {
                 System.out.print("EMPTY\t\t\t\t");
-            else
+            }
+
+            if (hasCardTop[0][3]) {
                 diamonds.peek().Display();
-
-            if (!hasCardTop[0][4])
+                System.out.print("\t");
+            }
+            else {
                 System.out.print("EMPTY\t\t\t\t");
-            else
+            }
+
+            if (hasCardTop[0][4]) {
                 spades.peek().Display();
-
-            if (!hasCardTop[0][5])
+                System.out.print("\t");
+            }
+            else {
                 System.out.print("EMPTY\t\t\t\t");
-            else
+            }
+
+            if (hasCardTop[0][5]) {
                 clovers.peek().Display();
+                System.out.print("\t");
+            }
+            else {
+                System.out.print("EMPTY\t\t\t\t");
+            }
 
             System.out.println();
         } //foundations
+
+
         {
             if (hasCardTop[1][1]) {
                 System.out.print("\t\t\t\t\t");
@@ -159,7 +146,6 @@ public class Table {
             }
             System.out.println(longbar);
         } //second and third rows
-
         //Printing table
         for (int rows = 0; rows < max; rows++) {
             for (int cols = 0; cols < 7; cols++) {
@@ -175,9 +161,96 @@ public class Table {
         System.out.println(longbar);
     }
 
-    public void CardPileStackPlusPlus() {
+    public void DisplayTable() {
+        //Initalizing longbar
+        String longbar = longbar();
+
+        //Finding max rows
+        int max = max();
+
+        //Begin printing
+        System.out.println(longbar);
+
+        //New Stack and overflow
+        for (int i = 0; i < 2; i++) {
+            int j = 0;
+            if (hasCardTop[0][i]) {
+                switch (i) {
+                    case 0 -> {
+                        down.peek().Display();
+                        System.out.print("\t");
+                    }
+                    case 1 -> up[0].Display();
+                }
+            }
+            else {
+                System.out.print("EMPTY\t\t\t\t");
+            }
+        }
+        System.out.print("\t\t\t\t\t");
+
+        //New Foundations
+        for (int i = 2; i < 6; i++){
+            if (hasCardTop[0][i]){
+                switch(i){
+                    case 2:
+                        hearts.peek().Display();
+                        System.out.print("\t");
+                        break;
+                    case 3:
+                        diamonds.peek().Display();
+                        System.out.print("\t");
+                        break;
+                    case 4:
+                        spades.peek().Display();
+                        System.out.print("\t");
+                        break;
+                    case 5:
+                        clovers.peek().Display();
+                        System.out.println("\t");
+                        break;
+                }
+            }
+            else
+                System.out.print("EMPTY\t\t\t\t");
+        }
+
+        System.out.println();
+
+        {
+            for (int i = 1; i <=2; i++)
+
+            if (hasCardTop[i][1]) {
+                System.out.print("\t\t\t\t\t");
+                up[i].Display();
+                System.out.println();
+            }
+
+            System.out.println(longbar);
+        } //second and third rows
+        //Printing table
+        for (int rows = 0; rows < max; rows++) {
+            for (int cols = 0; cols < 7; cols++) {
+                if (hasCardTable[rows][cols]) {
+                    cardsOnTable[rows][cols].Display();
+                    System.out.print("\t");
+                } else
+                    System.out.print("\t\t\t\t\t");
+            }
+            System.out.println();
+        }
+
+        System.out.println(longbar);
+
+
+    }
+    public void cardPileStackPlusPlus() {
         if (drawPileSize < 3)
             drawPileSize++;
+    }
+
+    public void cardPileStackMinusMinus() {
+        drawPileSize--;
     }
 
     public void CardPileReset() {
@@ -188,7 +261,31 @@ public class Table {
         return drawPileSize;
     }
 
-    public void updateDownSize(int size){
+    public void setDownSize(int size) {
         downSize = size;
+    }
+
+    public int getDownsize() {
+        return downSize;
+    }
+
+    public int max(){
+        int max = 1;
+        for (int cols = 0; cols < 7; cols++) {
+            int r = 0;
+            int contestor = 0;
+            while (hasCardTable[r++][cols])
+                contestor++;
+            if (contestor > max)
+                max = contestor;
+        }
+        return max;
+    }
+
+    public String longbar(){
+        String longbar = "";
+        for (int i = 0; i < 137; i++)
+            longbar += '=';
+        return longbar;
     }
 }
