@@ -5,14 +5,19 @@ public class GameFrame extends JFrame {
 
     GamePanel panel;
 
+
     GameFrame(){
+        setLayout(new FlowLayout());
         panel = new GamePanel();
         add(panel);
+
+
+        setBackground(new Color (GamePanel.TABLE_GREEN));
         setTitle("Solitare");
-        setResizable(false);
+        setResizable(true);
         setVisible(true);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
+        setResizable(true);
 
         pack();
     }

@@ -17,42 +17,43 @@ public class Table{
 
     Card[][] cardsOnTable = new Card[MAX_ROWS][MAX_COLUMNS];
 
-    Deck deck = new Deck();
+    Deck d = new Deck();
 
-    Stack<Card> down = new Stack<>();
+    Stack<Card> deck = new Stack<>();
     Card[] up = new Card[3];
     Stack<Card> throwaway = new Stack<>();
 
     Stack<Card> hearts = new Stack<>();
     Stack<Card> diamonds = new Stack<>();
     Stack<Card> spades = new Stack<>();
-    Stack<Card> clovers = new Stack<>();
+    Stack<Card> clubs = new Stack<>();
 
     private int drawPileSize = 0;
-    private int downSize = 24;
+    private int deckSize = 24;
 
     Table() {
-
         hasCardTop[0][0] = true;
 
         for (int rows = 0; rows < 7; rows++) {
             for (int cols = 0; cols < 7; cols++) {
                 if (rows <= cols) {
                     hasCardTable[rows][cols] = true;
-                    cardsOnTable[rows][cols] = deck.cardStack.peek();
-                    deck.cardStack.pop();
+                    cardsOnTable[rows][cols] = d.cardStack.peek();
+                    d.cardStack.pop();
                 }
 
                 if (rows == cols)
-                    cardsOnTable[rows][cols].isUp();
+                    cardsOnTable[rows][cols].Flip();
             }
         }
-        down = deck.cardStack;
+        deck = d.cardStack;
+        setDeckSize(24);
+
     }
 
     public int findFirstCard(int col) {
         int row = 0;
-        while (hasCardTable[row][col]) {
+        while (hasCardTable[row][col] && row < MAX_ROWS) {
             row++;
         }
         row--;
@@ -68,11 +69,10 @@ public class Table{
 
         //New Stack and overflow
         for (int i = 0; i < 2; i++) {
-            int j = 0;
             if (hasCardTop[0][i]) {
                 switch (i) {
                     case 0 -> {
-                        down.peek().Display();
+                        deck.peek().Display();
                         System.out.print("\t");
                     }
                     case 1 -> up[0].Display();
@@ -84,7 +84,7 @@ public class Table{
         System.out.print("\t\t\t\t\t");
 
         //New Foundations
-        for (int i = 2; i < 7; i++) {
+        for (int i = 3; i < 7; i++) {
             if (hasCardTop[0][i]) {
                 switch (i) {
                     case 3:
@@ -100,7 +100,7 @@ public class Table{
                         System.out.print("\t");
                         break;
                     case 6:
-                        clovers.peek().Display();
+                        clubs.peek().Display();
                         System.out.println("\t");
                         break;
                 }
@@ -135,13 +135,14 @@ public class Table{
 
 
     }
-    public void cardPileStackPlusPlus() {
+
+    public void addToDrawPile() {
         if (drawPileSize < 3)
             drawPileSize++;
     }
-
-    public void cardPileStackMinusMinus() {
-        drawPileSize--;
+    public void subFromDrawPile() {
+        if (drawPileSize > 0)
+            drawPileSize--;
     }
 
     public void CardPileReset() {
@@ -152,13 +153,15 @@ public class Table{
         return drawPileSize;
     }
 
-    public void setDownSize(int size) {
-        downSize = size;
+    public void setDeckSize(int size) {
+        deckSize = size;
     }
 
-    public int getDownsize() {
-        return downSize;
+    public int getDeckSize() {
+        return deckSize;
     }
+
+    public void subDeckSize(){deckSize--;}
 
     public int max(){
         int max = 1;

@@ -1,19 +1,26 @@
+import java.util.Objects;
 import java.util.Queue;
 import java.util.Random;
 import java.util.Stack;
 
 public class Deck {
     protected Card[] cardArray = new Card[52];
-    protected Stack<Card> cardStack = new Stack<Card>();
+    protected Stack<Card> cardStack = new Stack<>();
+    private Boolean shuffled = false;
 
     Deck() {
         int card = 0;
-        for (int v = 1; v <= 13; v++) {
+        for (int v = 1; v < 14; v++) {
             for (int s = 1; s <= 4; s++) {
                 cardArray[card++] = new Card(v, s);
             }
         }
-        this.Shuffle();
+
+        this.Shuffle(3);
+
+        StackMaker();
+        if (!shuffled)
+            System.out.println("NOT SHUFFLED");
     }
 
     public void Display(){
@@ -33,7 +40,9 @@ public class Deck {
         StackMaker();
     }
 
-    public void Shuffle() {
+    public void Shuffle(int count) {
+        System.out.println("Shuffling");
+        shuffled = true;
         //Declarations
         Random rand = new Random();
         boolean[][] cardsProduced = new boolean[13][4];
@@ -50,7 +59,10 @@ public class Deck {
                 cardsProduced[v][s] = true;
             }
         }
-        StackMaker();
+        if (count > 1)
+            Shuffle(count - 1);
+        else
+            return;
     }
 
     public void StackMaker() {

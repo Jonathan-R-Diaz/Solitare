@@ -1,23 +1,19 @@
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 
 public class Card {
     private int v, s;
-    private String value, suit, cardName, cardBack;
-    private boolean isRed;
-    private JLabel front, back, current;
-    private boolean isUp;
+    private String value, suit, cardName;
+    private boolean red, king, ace, up, emptyButton, emptyCol = false;
+    private ImageIcon front, back, icon;
 
     Card(int v, int s){
-        int vc = 0, sc = 0;
         //Sets value
         {
             this.v = v;
             if (1 < v & v < 11) {
                 value = Integer.toString(v);
-                vc = 3;
-                if (v < 10)
-                    vc++;
             }
             else {
                 switch (v) {
@@ -25,14 +21,19 @@ public class Card {
                     case 11 -> value = "jack";
                     case 12 -> value = "queen";
                     case 13 -> value = "king";
-                    default -> value = "JOKER";
+                    default -> value = "joker";
                 }
-                switch (v) {
-                    case 1 -> vc = 2;
-                    case 11 -> vc = 1;
-                    case 12 -> vc = 0;
-                    case 13 -> vc = 1;
-                    default -> vc = 0;
+                if (v == 13) {
+                    king = true;
+                    ace = false;
+                }
+                else if (v == 1) {
+                    ace = true;
+                    king = false;
+                }
+                else{
+                    ace = false;
+                    king = false;
                 }
             }
         }
@@ -40,72 +41,105 @@ public class Card {
         this.s = s;
         switch (s) {
             case 1 -> {
-                suit = "Hearts";
-                isRed = true;
-                sc = 2;
+                suit = "hearts";
+                red = true;
             }
             case 2 -> {
-                suit = "Diamonds";
-                isRed = true;
-                sc = 0;
+                suit = "diamonds";
+                red = true;
             }
             case 3 -> {
-                suit = "Spades*";
-                isRed = false;
-                sc = 1;
+                suit = "spades";
+                red = false;
             }
             case 4 -> {
-                suit = "Clovers*";
-                isRed = false;
-                sc = 0;
+                suit = "clubs";
+                red = false;
             }
             default -> {
-                suit = "RED";
-                isRed = true;
-                sc = 5;
+                suit = "red";
+                red = true;
             }
         }
-        cardName = (value + " of " + suit);
-        cardBack = "Card is face down";
 
-        for (int i = 0; i < sc + vc; i++){
-            cardName += '_';
-        }
+        up = false;
+
+        ImageIcon imageIcon = new ImageIcon("redcardback.png");
+        back = Resize(imageIcon);
+
+        imageIcon = new ImageIcon(String.format("C:\\Users\\Poox\\Desktop\\CompSci\\Resume\\SolitareProject\\Solitare\\cardfaces\\%s_of_%s.png", value, suit));
+        front = Resize(imageIcon);
+
+        cardName = (value + " of " + suit);
+
+    }
+    Card(){
+        emptyButton = true;
 
     }
 
     public void Display(){
-        if (isUp)
+        if (up)
             System.out.print(cardName);
         else
-            System.out.print(cardBack);
+            System.out.print("Card is face down");
     }
 
     public String getCardName(){
-        if (isUp)
-            return cardName;
-        else
-            return cardBack;
+        return cardName;
     }
+
+    public int getValue(){return v;}
 
     public String getSuit(){
         return suit;
     }
-
     public int getSuitInt(){
         return s;
     }
-    public void isUp(){
-        isUp = true;
+
+    public void Flip(){
+        up = !up;
     }
 
-    public void isDown(){
-        isUp = false;
+    public Boolean isUp(){
+        return up;
+    }
+    public Boolean isDown(){
+        return !up;
+    }
+    public Boolean isAce(){return ace;}
+    public Boolean isKing(){return king;}
+    public Boolean isEmpty(){return emptyCol;}
+
+    public boolean isRed(){
+        return red && up;
+    }
+    public boolean isBlack(){
+        return !red && up;
     }
 
-    public boolean isCurrentlyUp(){
-        return isUp;
+    public void setEmptyCol(boolean emptyCol) {
+        this.emptyCol = emptyCol;
     }
 
-    public boolean isCurrentlyDown(){ return !isUp; }
+    public ImageIcon Resize(ImageIcon imageIcon){
+        Image image = imageIcon.getImage(); // transform it
+        Image newimg = image.getScaledInstance(90, 120,  java.awt.Image.SCALE_SMOOTH); // scale it the smooth way
+        imageIcon = new ImageIcon(newimg);
+        return imageIcon;
+    }
+    public ImageIcon getCardIcon(){
+
+        //System.out.println("getCardIcon called");
+
+        if (isUp())
+            return front;
+        else
+            return back;
+
+    }
+    public void reset(){
+
+    }
 }
