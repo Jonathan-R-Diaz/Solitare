@@ -1,5 +1,5 @@
-public class Rules extends Table {
-
+public class Rules {
+/*
     //DrawToTable
     public boolean isValidMove(int toCol) {
         Card draw = up[0];
@@ -65,29 +65,19 @@ public class Rules extends Table {
     }
 
     public boolean TableRules(Card from, Card to){
-        if (from != null && to != null) {
-            if (!isOneSmaller(from, to))
-                System.out.println("Not decremented");
-            if (!hasDifferentColors(from, to))
-                System.out.println("Same color");
-
+        if (from != null && to != null)
             return isOneSmaller(from, to) && hasDifferentColors(from, to);
-        }
+
         else
             return false;
     }
-    public boolean FoundationRules(Card from, Card to){
-        if (from != null) {
-            if (!hasSameSuits(from, to))
-                System.out.println("Foundations didnt match");
-            if (!isOneBigger(from, to))
-                System.out.println("Not incremented");
+    public boolean FoundationRules(Card from, Card to) {
+        if (from != null)
             return hasSameSuits(from, to) && isOneBigger(from, to);
-        } else {
-            System.out.println("Card null");
-            return false;
-        }
+
+        return false;
     }
+
 
     public Card FoundationCardFinder(String suit){
         Card foundation = null;
@@ -181,12 +171,6 @@ public class Rules extends Table {
     }
     public boolean isKing(Card card, int toCol){
         if (card != null) {
-            if (findFirstCard(toCol) == -1)
-                System.out.println("Column empty, check");
-            if (card.getValue() == 13)
-                System.out.println("Is king, check");
-            if (!hasCardTable[0][toCol])
-                System.out.println("No card in column: " + toCol);
             return findFirstCard(toCol) == -1 && card.getValue() == 13 && !hasCardTable[0][toCol];
         }
         return false;
@@ -210,4 +194,5 @@ public class Rules extends Table {
     public boolean AllCardsSorted(){
         return hearts.size() + diamonds.size() + spades.size() + clubs.size() == 52;
     }
+    */
 }

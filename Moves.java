@@ -1,4 +1,48 @@
+import java.util.Stack;
+
 public class Moves extends Rules {
+/*
+    Moves(){}
+    Moves(Table oldTable){
+
+        //Copy for cardsOnTable and hasCardTable
+        for (int rows = 0; rows < MAX_ROWS; rows++){
+            for (int cols = 0; cols < MAX_COLUMNS; cols++) {
+                this.hasCardTable[rows][cols] = oldTable.hasCardTable[rows][cols];
+                this.cardsOnTable[rows][cols] = new Card();
+                if (oldTable.hasCardTable[rows][cols])
+                    this.cardsOnTable[rows][cols].copyThisCard(oldTable.cardsOnTable[rows][cols]);
+            }
+        }
+
+        //Copy for top panel
+        for (int rows = 0; rows < 3; rows++){
+            for (int cols = 0; cols < 7; cols++){
+                this.hasCardTop[0][cols] = oldTable.hasCardTop[0][cols];
+                if (cols == 1)
+                    this.hasCardTop[rows][1] = oldTable.hasCardTop[rows][1];
+            }
+        }
+
+        stackCopier(this.deck, oldTable.deck, oldTable.deck.size());
+        if (this.deck.size() > 0 && this.deck.peek().isUp())
+            this.deck.peek().Flip();
+
+        for (int i = 0; i < 3; i++) {
+            this.hasCardTop[i][1] = oldTable.hasCardTop[i][1];
+            this.up[i] = null;
+            this.up[i] = oldTable.up[i];
+        }
+
+        stackCopier(this.throwaway, oldTable.throwaway, oldTable.throwaway.size());
+        stackCopier(this.hearts, oldTable.hearts, oldTable.hearts.size());
+        stackCopier(this.diamonds, oldTable.diamonds, oldTable.diamonds.size());
+        stackCopier(this.spades, oldTable.spades, oldTable.spades.size());
+        stackCopier(this.clubs, oldTable.clubs, oldTable.clubs.size());
+
+        this.setDeckSize(oldTable.getDeckSize());
+        this.setDrawPileSize(oldTable.getDeckSize());
+    }
 
     public void Draw() {
         //System.out.println("Draw function called");
@@ -35,7 +79,7 @@ public class Moves extends Rules {
                     hasCardTop[i][1] = false;
                 }
 
-                for (int i = 0; i < getDeckSize(); i++) {
+                for (int i = 0; i < throwaway.size(); i++) {
                     deck.push(throwaway.peek());
                     throwaway.pop();
                     deck.peek().Flip();
@@ -50,7 +94,7 @@ public class Moves extends Rules {
                 hasCardTop[0][0] = false;
         }
     }
-    public void DrawToTable(int toCol) {
+    public boolean DrawToTable(int toCol) {
 
         if (isValidMove(toCol)) {
 
@@ -68,8 +112,9 @@ public class Moves extends Rules {
             DrawCycler();
         }
 
+        return isValidMove(toCol);
     }
-    public void DrawToFoundation(String suit) {
+    public boolean DrawToFoundation(String suit) {
 
         //System.out.println("DrawToFoundation called");
         //System.out.println(suit);
@@ -97,10 +142,9 @@ public class Moves extends Rules {
                 }
             }
             DrawCycler();
-        } else {
-            //System.out.println("Waste empty");
         }
 
+        return isValidMove(suit);
     }
 
 
@@ -117,7 +161,7 @@ public class Moves extends Rules {
         }
     }
 
-    public void moveCard(int fromRow, int fromCol, int toCol) {
+    public boolean moveCard(int fromRow, int fromCol, int toCol) {
 
         //System.out.println("moveCard called.");
 
@@ -143,9 +187,10 @@ public class Moves extends Rules {
                 cardsOnTable[fromRow++][fromCol] = null;
             }
         }
+        return isValidMove(fromRow, fromCol, toCol);
     }
 
-    public void TableIntoFoundation(int fromRow, int fromCol, String suit) {
+    public boolean TableIntoFoundation(int fromRow, int fromCol, String suit) {
         //System.out.println("moveIntoFoundation called.");
         //System.out.println("TABLE.TableIntoFoundation(" + fromRow + ", " + fromCol + ", " + suit);
         //System.out.println("\nfromRow: " + fromRow + ", fromCol: " + fromCol + ", suit: " + suit);
@@ -192,9 +237,9 @@ public class Moves extends Rules {
                 }
             }
         }
-
+        return isValidMove(fromRow, fromCol, suit);
     }
-    public void FoundationToTable(int pile, int toCol){
+    public boolean FoundationToTable(int pile, int toCol){
         //System.out.println("Foundation to table called.");
         //System.out.println("FoundationToTable(" + pile + ", " + toCol + ")");
         Card temp = null;
@@ -232,31 +277,7 @@ public class Moves extends Rules {
             cardsOnTable[toCardCounter][toCol] = temp;
             hasCardTable[toCardCounter][toCol] = true;
         }
-    }
-
-    public void TableToTableKingMove(int fromRow, int fromCol, int toCol){
-        if (cardsOnTable[fromRow][fromCol].isKing() && !hasCardTable[0][toCol]){
-
-            int toCardCounter = 0;
-
-            while (hasCardTable[fromRow][fromCol]) {
-                //System.out.println("test");
-                cardsOnTable[toCardCounter][toCol] = cardsOnTable[fromRow][fromCol];
-                hasCardTable[toCardCounter++][toCol] = true;
-                hasCardTable[fromRow][fromCol] = false;
-                cardsOnTable[fromRow++][fromCol] = null;
-            }
-        }
-        /*
-        else {
-            System.out.println("TableToTableKingMove not successful: ");
-            if (!cardsOnTable[fromRow][fromCol].isKing())
-                System.out.println("Card not king");
-            if (hasCardTable[0][toCol])
-                System.out.println("Column not empty");
-        }
-        */
-
+        return isValidMove(pile, toCol);
     }
 
     public void CHEAT_DeleteDeck(){
@@ -284,5 +305,7 @@ public class Moves extends Rules {
             clubs.push(temp);
         }
     }
+    */
+
 }
 

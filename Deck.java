@@ -1,5 +1,3 @@
-import java.util.Objects;
-import java.util.Queue;
 import java.util.Random;
 import java.util.Stack;
 
@@ -10,18 +8,21 @@ public class Deck {
 
     Deck() {
         int card = 0;
-        for (int v = 1; v < 14; v++) {
+        for (int v = 13; v > 0; v--) {
             for (int s = 1; s <= 4; s++) {
                 cardArray[card++] = new Card(v, s);
             }
         }
 
-        this.Shuffle(3);
+        Shuffle(1000);
 
         StackMaker();
         if (!shuffled)
             System.out.println("NOT SHUFFLED");
+
     }
+
+    Deck (int i){}
 
     public void Display(){
         for (int i = 0; i < 52; i++)
@@ -41,23 +42,33 @@ public class Deck {
     }
 
     public void Shuffle(int count) {
-        System.out.println("Shuffling");
         shuffled = true;
         //Declarations
         Random rand = new Random();
         boolean[][] cardsProduced = new boolean[13][4];
         int cardsFinished = 0;
 
-        //Shuffle loop
-        while (cardsFinished != 52) {
-            //Trial card
-            int v = rand.nextInt(13) + 1, s = rand.nextInt(4) + 1;
-            Card tempCard = new Card(v, s);
+        //Shuffle Loop
+        for (int i = 0; i < cardArray.length; i++){
+            int bound = cardArray.length - i;
+            int index = rand.nextInt(bound);
+            Card temp = cardArray[bound - 1];
+            cardArray[bound - 1] = cardArray[index];
+            cardArray[index] = temp;
+        }
 
-            if (!cardsProduced[--v][--s]) {
-                this.cardArray[cardsFinished++] = tempCard;
-                cardsProduced[v][s] = true;
-            }
+        //Ruffle Shuffle
+        Card [] tempArray = new Card[cardArray.length];
+
+        for (int i = 0; i < cardArray.length; i++)
+            tempArray[i] = cardArray[i];
+
+        int j = 0;
+        for (int i = cardArray.length - 1; i >= 0; i--){
+            if (i % 2 == 0)
+                cardArray[i] = tempArray[i/2];
+            else
+                cardArray[i] = tempArray[i + j++];
         }
         if (count > 1)
             Shuffle(count - 1);

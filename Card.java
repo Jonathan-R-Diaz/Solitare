@@ -5,7 +5,7 @@ import java.io.File;
 public class Card {
     private int v, s;
     private String value, suit, cardName;
-    private boolean red, king, ace, up, emptyButton, emptyCol = false;
+    private boolean red, king, ace, up;
     private ImageIcon front, back, icon;
 
     Card(int v, int s){
@@ -73,10 +73,7 @@ public class Card {
         cardName = (value + " of " + suit);
 
     }
-    Card(){
-        emptyButton = true;
-
-    }
+    Card(){}
 
     public void Display(){
         if (up)
@@ -110,7 +107,6 @@ public class Card {
     }
     public Boolean isAce(){return ace;}
     public Boolean isKing(){return king;}
-    public Boolean isEmpty(){return emptyCol;}
 
     public boolean isRed(){
         return red && up;
@@ -119,14 +115,30 @@ public class Card {
         return !red && up;
     }
 
-    public void setEmptyCol(boolean emptyCol) {
-        this.emptyCol = emptyCol;
+    public void setFlip(boolean up){
+        this.up = up;
+    }
+
+    public void copyThisCard(Card c){
+        v = c.v;
+        s = c.s;
+
+        value = c.value;
+        suit = c.suit;
+        cardName = c.cardName;
+
+        red = c.red;
+        king = c.king;
+        ace = c.ace;
+        up = c.up;
+
+        front = c.front;
+        back = c.back;
+        icon = c.getCardIcon();
     }
 
     public ImageIcon Resize(ImageIcon imageIcon){
-        Image image = imageIcon.getImage(); // transform it
-        Image newimg = image.getScaledInstance(90, 120,  java.awt.Image.SCALE_SMOOTH); // scale it the smooth way
-        imageIcon = new ImageIcon(newimg);
+        imageIcon = new ImageIcon(imageIcon.getImage().getScaledInstance(90, 120,  java.awt.Image.SCALE_SMOOTH));
         return imageIcon;
     }
     public ImageIcon getCardIcon(){
@@ -137,9 +149,6 @@ public class Card {
             return front;
         else
             return back;
-
-    }
-    public void reset(){
 
     }
 }

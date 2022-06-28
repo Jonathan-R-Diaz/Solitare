@@ -2,12 +2,23 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Stack;
 
 public class GamePanel extends JPanel{
-    static final int MAX_ROWS = 20;
-    static final int MAX_COLS = 7;
+    static final int MAX_ROWS = Table.MAX_ROWS;
+    static final int MAX_COLS = Table.MAX_COLUMNS;
     static final int TABLE_GREEN = 0x158209;
+
+    static final int BUTTON_WIDTH = 124;
+    static final int BUTTON_HEIGHT = 136;
+    static final int BUTTON_OVERLAP = (int)(BUTTON_HEIGHT * .3);
+
+    static final int GRID_WIDTH = BUTTON_WIDTH * 7;
+    static final int GRID_HEIGHT = BUTTON_OVERLAP * 20 + BUTTON_HEIGHT;
+
     private final ActionListener AL = new AL();
+
+    Table TABLE;
 
     JButton [] cardsOnTop = new JButton[7];
     JButton [][] cardsOnTable = new JButton[MAX_ROWS][MAX_COLS];
@@ -19,303 +30,374 @@ public class GamePanel extends JPanel{
     JButton Spades;
     JButton Clubs;
 
-    PButton button1 = new PButton();
-    PButton button2 = new PButton();
-    Moves TABLE;
+    JButton Undo;
+    JButton NewGame;
+
+    SButton button1 = new SButton();
+    SButton button2 = new SButton();
+
     JPanel TopPanel;
     JPanel CardGridPanel;
+    JPanel BottomPanel;
 
-    public class PButton extends JButton{
-        private int row, col, pile;
-        private boolean initialized, isDraw, isFoundation, isCard, isKing, isEmptyCol;
+    JLayeredPane CardGridPane;
 
-        public void setCard(int r, int c){
-            row = r;
-            col = c;
-            initialized = true;
-            isCard = true;
-            isDraw = false;
-            isFoundation = false;
-            if (!TABLE.hasCardTable[r][c] && r == 0)
-                isEmptyCol = true;
-            else if (TABLE.cardsOnTable[r][c].getValue() == 13)
-                isKing = true;
+    JLabel youWin = new JLabel("You win!!!");
 
-            button1.cout();
-        }
-
-        public void setDraw(){
-            initialized = true;
-            isCard = false;
-            isDraw = true;
-            isFoundation = false;
-            isKing = false;
-            isEmptyCol = false;
-        }
-
-        public void setFoundation(int num){
-            pile = num;
-
-            initialized = true;
-            isCard = false;
-            isDraw = false;
-            isFoundation = true;
-        }
-
-        public void reset(){
-            row = 0;
-            col = 0;
-            initialized = false;
-            isCard = false;
-            isDraw = false;
-            isFoundation = false;
-            isEmptyCol = false;
-        }
-
-        public int getRow() {
-            return row;
-        }
-        public int getCol(){
-            return col;
-        }
-
-        public boolean isInitialized(){
-            return initialized;
-        }
-        public boolean isCard(){ return isCard;}
-        public boolean isDraw(){
-            return isDraw;
-        }
-        public boolean isFoundation(){ return isFoundation;}
-        public boolean isKing(){return isKing;}
-        public boolean isEmpty(){return isEmptyCol;}
-
-        public void cout(){
-            System.out.println("\trow: " + row);
-            System.out.println("\tcol: " + col);
-            System.out.println("\tinitialized: " + initialized);
-            System.out.println("\tisCard: " + isCard);
-            System.out.println("\tisDraw: " + isDraw);
-            System.out.println("\tisFoundations: " + isFoundation);
-            if (isKing)
-                System.out.println("\tIS KING");
-        }
-    }
+    static Stack<Table>History = new Stack<>();
 
     GamePanel() {
 
         setLayout(new BorderLayout());
-        TABLE = new Moves();
+        TABLE = new Table();
 
-        CardGridPanel = new JPanel(new GridLayout(MAX_ROWS + 1, MAX_COLS, 0 ,-96));
+        CardGridPanel = new JPanel(new FlowLayout());
+        CardGridPanel.setLayout(null);
+        CardGridPanel.setSize(GRID_WIDTH, GRID_HEIGHT);
         CardGridPanel.setBackground(new Color(TABLE_GREEN));
 
+        CardGridPane = new JLayeredPane();
+        CardGridPane.setLayout(null);
+        CardGridPane.setSize(GRID_WIDTH, GRID_HEIGHT);
+        CardGridPane.setBackground(new Color(TABLE_GREEN));
+
+        CardGridPanel.add(CardGridPane);
 
         TopPanel = new JPanel();
         TopPanel.setLayout(new FlowLayout());
         TopPanel.setBackground(new Color(TABLE_GREEN));
 
-        JLabel title = new JLabel("Solitare");
+        BottomPanel = new JPanel();
 
-        add(title, BorderLayout.NORTH);
-
-        AddTopPanel();
+        addTopPanel();
         add(TopPanel, BorderLayout.NORTH);
-        AddCardGrid();
+        addCardGrid();
         add(CardGridPanel, BorderLayout.CENTER);
+        addBottomPanel();
+        add(BottomPanel, BorderLayout.SOUTH);
 
-        TABLE.DisplayTable();
-        //SolitaireAlgorithm(5);
-        firstRound(2);
+        updateHistory();
         updateGUI();
+
+
     }
 
-    public class AL implements ActionListener{
+    //Constructor button adders
+    public void addTopPanel(){
+        for (int i = 0; i < 7; i++){
+
+            String buttonName = switch (i) {
+                case 0 -> "";
+                case 1 -> "Empty";
+                case 3 -> "Hearts";
+                case 4 -> "Diamonds";
+                case 5 -> "Spades";
+                case 6 -> "Clubs";
+                default -> "";
+            };
+            if (i != 2)
+                pileButtonAdder(buttonName, i);
+        }
+    }
+    public void addCardGrid(){
+        for (int c = MAX_COLS - 1; c >= 0; c--){
+            for (int r = MAX_ROWS - 1; r >= 0; r--)
+            {
+                JButton button;
+                if (TABLE.hasCardTable[r][c]) {
+                    button = new JButton(TABLE.cardsOnTable[r][c].getCardIcon());
+                } else {
+                    button = new JButton();
+                }
+                button.setBounds( c * BUTTON_WIDTH, r * BUTTON_OVERLAP, BUTTON_WIDTH, BUTTON_HEIGHT);
+                cardsOnTable[r][c] = button;
+                cardGridFiller(r,c);
+                button.addActionListener(AL);
+                CardGridPane.add(button);
+                CardGridPane.setLayer(button, r);
+            }
+        }
+    }
+    private void addBottomPanel() {
+        BottomPanel.setBackground(new Color(TABLE_GREEN));
+
+        JButton undo = new JButton("Undo");
+        undo.addActionListener(AL);
+        Undo = undo;
+        BottomPanel.add(undo);
+
+        JButton reset = new JButton("New Game");
+        reset.addActionListener(AL);
+        NewGame = reset;
+        BottomPanel.add(reset);
+    }
+    public void pileButtonAdder(String type, int pile) {
+
+        JButton button = new JButton();
+        button.setBackground(Color.white);
+        button.setOpaque(false);
+        button.setBorderPainted(false);
+
+        button.setText(type);
+        button.setSize(new Dimension(75, 100));
+        button.addActionListener(AL);
+        cardsOnTop[pile] = button;
+
+        if (pile == 0) {
+            button.setIcon(TABLE.deck.peek().getCardIcon());
+            DeckButton = button;
+        }
+        if (pile == 1)
+            DrawPileButton = button;
+
+        else {
+            switch(pile){
+                case 3 ->{ Hearts = button; }
+                case 4 ->{ Diamonds = button; }
+                case 5 ->{ Spades = button; }
+                case 6 ->{ Clubs = button; }
+            }
+        }
+        TopPanel.add(button);
+    }
+
+    //ActionListener
+    public class AL implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
 
             //FIND BUTTON
             int r = 0, c = 0;
 
-
-            for (int i = 0; i < MAX_ROWS; i++) {
-                for (int j = 0; j < MAX_COLS; j++) {
-                    if (e.getSource() == cardsOnTable[i][j]) {
-                        r = i;
-                        c = j;
+            if (gridClicked(e)) {
+                for (int i = 0; i < MAX_ROWS; i++) {
+                    for (int j = 0; j < MAX_COLS; j++) {
+                        if (e.getSource() == cardsOnTable[i][j]) {
+                            r = i;
+                            c = j;
+                        }
                     }
                 }
             }
 
-            //CARD
-            if (button1.isInitialized()) {
+            if (e.getSource() == Undo) {
+                Undo();
+                return;
+            }
 
-                //FOUNDATION TO TABLE
-                if(button1.isFoundation) {
-                    button2.setCard(r, c);
-                    TABLE.FoundationToTable(button1.pile, button2.col);
-                    ResetButtons();
-                    updateFoundations();
-                    updateTable();
-                }
+            if (e.getSource() == NewGame) {
+                Reset();
+                return;
+            }
 
-                //DRAW TO *
-                else if (button1.isDraw()) {
-                    //System.out.println("Button 1 isDraw();");
-                    //DRAW TO FOUNDATION
-                    if (foundationsClicked(e)) {
-                        //System.out.println("In foundationsClicked");
-                        if (e.getSource() == Hearts) {
-                            TABLE.DrawToFoundation("Hearts");
-                        }
-                        else if (e.getSource() == Diamonds) {
-                            TABLE.DrawToFoundation("Diamonds");
-                        }
-                        else if (e.getSource() == Spades) {
-                            TABLE.DrawToFoundation("Spades");
-                        }
-                        else if (e.getSource() == Clubs) {
-                            TABLE.DrawToFoundation("clubs");
-                        }
-                        updateDeckAndDraw();
-                        updateFoundations();
-                        ResetButtons();
-                    }
+            if (e.getSource() == DeckButton) {
+                Draw();
+                return;
+            }
 
-                    //DRAW TO TABLE
-                    else {
-                        button2.setCard(r,c);
-                        TABLE.DrawToTable(button2.col);
-                        updateDeckAndDraw();
-                        updateTable();
-                    }
-                    ResetButtons();
-                }
+            if (!actionListenerStepOne(e, r, c))
+                actionListenerStepTwo(e, r, c);
 
-                //KING MOVE
-                else if (button1.isDraw() && r == 0) {
-                    button2.setCard(r, c);
-                    TABLE.isValidMove(c);
-                    TABLE.moveCard(button1.row, button1.col, button2.col);
-                    updateTable();
-                    ResetButtons();
-                }
+            if (WinCondition())
+                TopPanel.add(youWin);
 
-                //TABLE TO *
+        }
+    }
+    public boolean actionListenerStepOne(ActionEvent e, int r, int c){
+        if (button1.isNotInitialized()) {
+            if (gridClicked(e))
+                button1.setCard(r, c);
+            else if (e.getSource() == DrawPileButton && TABLE.up[0] != null)
+                button1.setDraw();
+            else
+                button1.setFoundation(pileFinder(e));
+            return true;
+        }
+        else
+            return false;
+    }
+    public void actionListenerStepTwo(ActionEvent e, int r, int c){
+        if (button1.isInitialized()){
+            //DRAW TO *
+            if (button1.isDraw()) {
+
+                if (gridClicked(e))
+                    DrawToTable(c);
                 else {
-
-                    //TABLE TO FOUNDATION
-                    if (foundationsClicked(e) && button1.isCard()) {
-
-                        if (e.getSource() == cardsOnTop[3]) {
-                            //System.out.println("TABLE.TableIntoFoundation(" + button1.row + ", " + button1.col + ", \"Hearts\")");
-                            TABLE.TableIntoFoundation(button1.row, button1.col, "hearts");
-                            TABLE.TableIntoFoundation(button1.row, button1.col, "hearts");
-                        } else if (e.getSource() == cardsOnTop[4]) {
-                            //System.out.println("TABLE.TableIntoFoundation(" + button1.row + ", " + button1.col + ", \"Diamonds\")");
-                            TABLE.TableIntoFoundation(button1.row, button1.col, "diamonds");
-                        } else if (e.getSource() == cardsOnTop[5]) {
-                            //System.out.println("TABLE.TableIntoFoundation(" + button1.row + ", " + button1.col + ", \"Spades\")");
-                            TABLE.TableIntoFoundation(button1.row, button1.col, "spades");
-                        } else if (e.getSource() == cardsOnTop[6]) {
-                            //System.out.println("TABLE.TableIntoFoundation(" + button1.row + ", " + button1.col + ", \"clubs\")");
-                            TABLE.TableIntoFoundation(button1.row, button1.col, "clubs");
-                        }
-                        updateFoundations();
-                        updateTable();
-                        ResetButtons();
-                    }
-
-                    //TABLE TO TABLE
-                    else {
-                        if (button1.isKing || (TABLE.hasCardTable[r][c] && TABLE.cardsOnTable[r][c].isUp())) {
-                            button2.setCard(r, c);
-                            if (TABLE.isValidMove(button1.row, button1.col, button2.col))
-                                TABLE.moveCard(button1.row, button1.col, button2.col);
-
-                        } else {
-                            System.out.println("Can't pick that card, face down");
-                        }
-                        updateTable();
-                        ResetButtons();
-                    }
+                    DrawToFoundation(TABLE.up[0].getSuit());
                 }
             }
 
-            //DECK
-            else if (e.getSource() == cardsOnTop[0]) {
-                TABLE.Draw();
-                ResetButtons();
-                updateDeckAndDraw();
-            }
-            //DRAW
-            else if (e.getSource() == cardsOnTop[1] && !button1.isInitialized())
-                if (TABLE.up[0] != null)
-                    button1.setDraw();
+            //TABLE TO *
+            else if (button1.isOnTable()) {
+
+                if (gridClicked(e))
+                    TableToTable(button1.getRow(), button1.getCol(), c);
                 else
-                    ResetButtons();
+                    TableToFoundation(button1.getRow(), button1.getCol(), TABLE.cardsOnTable[button1.getRow()][button1.getCol()].getSuit());
 
-                //FOUNDATION
-            else if (foundationsClicked(e) && !button1.isInitialized()) {
-                for(int i = 3; i < 7; i++){
-                    if (e.getSource() == cardsOnTop[i])
-                        button1.setFoundation(i);
-                }
             }
+            //FOUNDATION TO TABLE
+            else
+                FoundationToTable(button1.getPile(), c);
 
-            else {
-                if (TABLE.hasCardTable[r][c] && TABLE.cardsOnTable[r][c].isUp()) {
-                    button1.setCard(r, c);
-                } else {
-                    System.out.println("Can't pick that card, face down");
-                    ResetButtons();
-                }
+        }
+    }
+    public int pileFinder(ActionEvent e){
+        if (e.getSource() == Hearts)
+            return 3;
+        else if (e.getSource() == Diamonds)
+            return 4;
+        else if (e.getSource() == Spades)
+            return 5;
+        else if (e.getSource() == Clubs)
+            return 6;
+        else
+            return 0;
+    }
+
+    //Utilities
+    public void resetAndLog(){
+        resetButtons();
+        updateHistory();
+    }
+    public void resetButtons(){
+        button1.reset();
+        button2.reset();
+        //System.out.println("!!!!!BUTTONS RESET!!!!!");
+    }
+    public void cardGridFiller(int r, int c) {
+
+        cardsOnTable[r][c].setBackground(Color.white);
+        cardsOnTable[r][c].setOpaque(false);
+        cardsOnTable[r][c].setBorderPainted(false);
+
+
+        if (TABLE.hasCardTable[r][c]) {
+            cardsOnTable[r][c].setIcon(TABLE.cardsOnTable[r][c].getCardIcon());
+            cardsOnTable[r][c].setVisible(true);
+        }
+        else
+        {
+            if (r != 0) {
+                cardsOnTable[r][c].setVisible(false);
             }
-
-            if (TABLE.WinCondition())
-                System.out.println("YOU WON!!!");
-
-            PrintExitStatement("Leaving ActionListener");
-
-            TABLE.DisplayTable();
+            else
+                cardsOnTable[r][c].setIcon(null);
         }
     }
 
+    //Click locators
+    public boolean foundationsClicked(ActionEvent e){
+        return e.getSource() == Hearts || e.getSource() == Diamonds || e.getSource() == Spades || e.getSource() == Clubs;
+    }
+    public boolean gridClicked(ActionEvent e){
+        return !foundationsClicked(e) && e.getSource() != DrawPileButton && e.getSource() != DeckButton;
+    }
+
+    //Table Commands for GUI
+    public void Draw(){
+        TABLE.Draw();
+        updateHistory();
+        updateDeckAndDraw();
+        resetButtons();
+    }
+    public void DrawToTable(int toCol){
+        TABLE.DrawToTable(toCol);
+
+        updateTable();
+        updateDeckAndDraw();
+
+        resetAndLog();
+    }
+    public void DrawToFoundation(String suit){
+        TABLE.DrawToFoundation(suit);
+
+        updateDeckAndDraw();
+        updateFoundations();
+
+        resetAndLog();
+    }
+    public void TableToTable(int fromRow, int fromCol, int toCol){
+        TABLE.TableToTable(fromRow, fromCol, toCol);
+
+        updateTable();
+
+        resetAndLog();
+    }
+    public void TableToFoundation(int fromRow, int fromCol, String suit){
+        TABLE.TableToFoundation(fromRow, fromCol, suit);
+
+        updateTable();
+        updateFoundations();
+
+        resetAndLog();
+    }
+    public void FoundationToTable(int pile, int toCol){
+        TABLE.FoundationToTable(pile, toCol);
+
+        updateFoundations();
+        updateTable();
+
+        resetAndLog();
+    }
+    public boolean WinCondition(){
+        return TABLE.WinCondition();
+    }
+
+    //Menu Commands
+    public void Undo(){
+        if (History.size() > 1)
+            History.pop();
+        this.TABLE = new Table(History.peek());
+        updateGUI();
+        resetButtons();
+    }
+    public void Reset(){
+        NewGame.setText("Loading...");
+        History.clear();
+        TABLE = new Table();
+        updateGUI();
+        NewGame.setText("New Game");
+    }
+
+    //Updates
     public final void updateGUI() {
         //System.out.println("updateGrid called");
 
         updateDeckAndDraw();
         updateFoundations();
         updateTable();
+        resetButtons();
 
 
     }
     public final void updateDeckAndDraw(){
         //System.out.println("updateDeckAndDraw called");
         //DECK
-        if (TABLE.hasCardTop[0][0]){
-            cardsOnTop[0].setText("");
-            cardsOnTop[0].setIcon(TABLE.deck.peek().getCardIcon());
-            cardsOnTop[0].setBorderPainted(false);
+        if (TABLE.deck.size() > 0){
+            DeckButton.setText("");
+            DeckButton.setIcon(TABLE.deck.peek().getCardIcon());
+            DeckButton.setBorderPainted(false);
         }
         else {
-            cardsOnTop[0].setText("Deck empty");
-            cardsOnTop[0].setIcon(null);
-            cardsOnTop[0].setBorderPainted(true);
+            DeckButton.setText("Deck empty");
+            DeckButton.setIcon(null);
+            DeckButton.setBorderPainted(true);
         }
 
         //DRAW
-        if (TABLE.hasCardTop[0][1]) {
+        if (TABLE.up[0] != null) {
             DrawPileButton.setText("");
             DrawPileButton.setIcon(TABLE.up[0].getCardIcon());
         }
         else {
             DrawPileButton.setText("Empty");
-            cardsOnTop[1].setIcon(null);
+            DrawPileButton.setIcon(null);
         }
     }
     public final void updateFoundations(){
-        System.out.println("updateFoundations called");
+        //System.out.println("updateFoundations called");
         for (int i = 3; i < 7; i++) {
 
             switch (i){
@@ -367,161 +449,30 @@ public class GamePanel extends JPanel{
         }
     }
     public final void updateTable(){
-        System.out.println("updateTable called");
+        //System.out.println("updateTable called");
         for (int r = MAX_ROWS - 1; r >= 0; r--) {
             for (int c = 0; c < MAX_COLS; c++) {
-                CardGridFiller(r, c);
+                cardGridFiller(r, c);
             }
         }
     }
-
-    public void ResetButtons(){
-        button1.reset();
-        button2.reset();
-        System.out.println("!!!!!BUTTONS RESET!!!!!");
+    public final void updateHistory(){
+        Table temp = new Table(this.TABLE);
+        History.push(temp);
     }
 
-    //Constructor button adders
-    public void AddTopPanel(){
-
-        for (int i = 0; i < 7; i++){
-
-            String buttonName = "";
-            switch(i) {
-                case 0:
-                    buttonName = "";
-                    break;
-                case 1:
-                    buttonName = "Empty";
-                    break;
-                case 3:
-                    buttonName = "Hearts";
-                    break;
-                case 4:
-                    buttonName = "Diamonds";
-                    break;
-                case 5:
-                    buttonName = "Spades";
-                    break;
-                case 6:
-                    buttonName = "Clubs";
-                    break;
-            }
-            if (i != 2)
-            PileButtonAdder(buttonName, i);
-        }
-    }
-    public void PileButtonAdder(String type, int pile) {
-
-        JButton button = new JButton();
-        button.setBackground(Color.white);
-        button.setOpaque(false);
-        button.setBorderPainted(false);
-
-        button.setText(type);
-        button.setSize(new Dimension(75, 100));
-        button.addActionListener(AL);
-        cardsOnTop[pile] = button;
-
-        if (pile == 0) {
-            button.setIcon(TABLE.deck.peek().getCardIcon());
-            DeckButton = button;
-        }
-        if (pile == 1)
-            DrawPileButton = button;
-
-        else {
-            switch(pile){
-                case 3 ->{ Hearts = button; }
-                case 4 ->{ Diamonds = button; }
-                case 5 ->{ Spades = button; }
-                case 6 ->{ Clubs = button; }
-            }
-        }
-        TopPanel.add(button);
-    }
-    public void AddCardGrid() {
-
-        for (int r = 0; r < MAX_ROWS; r++) {
-            for (int c = 0; c < MAX_COLS; c++){
-                JButton button;
-                if (TABLE.hasCardTable[r][c]) {
-                    button = new JButton(TABLE.cardsOnTable[r][c].getCardIcon());
-                } else {
-                    button = new JButton();
-                }
-                cardsOnTable[r][c] = button;
-                CardGridFiller(r,c);
-                button.addActionListener(AL);
-                CardGridPanel.add(cardsOnTable[r][c]);
-            }
-        }
-    }
-    public void CardGridFiller(int r, int c) {
-
-        cardsOnTable[r][c].setBackground(null);
-        cardsOnTable[r][c].setOpaque(false);
-        cardsOnTable[r][c].setBorderPainted(false);
-
-
-        if (TABLE.hasCardTable[r][c]) {
-            cardsOnTable[r][c].setIcon(TABLE.cardsOnTable[r][c].getCardIcon());
-            cardsOnTable[r][c].setVisible(true);
-        }
-        else
-        {
-            if (r != 0)
-                cardsOnTable[r][c].setVisible(false);
-            else
-                cardsOnTable[r][c].setIcon(null);
-        }
-    }
-
-
-    public void ButtonPrinter(){
-         if (button1.isInitialized()){
-             System.out.println("Button 1");
-             button1.cout();
-             if (TABLE.hasCardTable[button1.row][button1.row]) {
-                 System.out.print("CARD SELECTED: ");
-                 TABLE.cardsOnTable[button1.row][button1.col].Display();
-                 System.out.println();
-             }
-         }
-         if (button2.isInitialized()){
-
-             System.out.println("***THIS SHOULD NEVER FIRE OFF***");
-             System.out.println("Button 2");
-             button2.cout();
-             if (TABLE.hasCardTable[button2.row][button2.row]) {
-                 System.out.print("CARD SELECTED: ");
-                 TABLE.cardsOnTable[button2.row][button2.col].Display();
-                 System.out.println();
-             }
-         }
-     }
-    public void PrintExitStatement(String statement){
-        System.out.println(TABLE.longbar());
-        System.out.println(statement);
-        System.out.println(TABLE.longbar());
-    }
-
-    public boolean foundationsClicked(ActionEvent e){
-        return e.getSource() == cardsOnTop[3] || e.getSource() == cardsOnTop[4] || e.getSource() == cardsOnTop[5] || e.getSource() == cardsOnTop[6];
-    }
-
-    public void SolitaireAlgorithm(int rec){
+    //AI Stuff
+    public void solitaireAlgorithm(int rec){
 
         firstRound(1);
-        midGame(1);
+        midGame(3);
         updateGUI();
 
         if (rec > 1)
-            SolitaireAlgorithm(rec - 1);
-        else return;
+            solitaireAlgorithm(rec - 1);
     }
     public void firstRound(int rec){
-        DrawtoFoundationAutoSort(5);
+        DrawToFoundationAutoSort(5);
         TableToFoundationAutoSort(5);
         TableToTableAutoSort(5);
         if (rec > 0)
@@ -535,28 +486,34 @@ public class GamePanel extends JPanel{
         if (rec > 0)
             midGame(rec - 1);
     }
-    public void DrawtoFoundationAutoSort(int rec){
+
+    //AI Subclasses
+    public void DrawToFoundationAutoSort(int rec){
+        //System.out.println("Ripping through deck");
         for (int num = 1; num < 14; num++) {
-            System.out.println("autoSort for: " + num + ", Deck size: " + TABLE.getDeckSize());
+            //System.out.println("autoSort for: " + num + ", Deck size: " + TABLE.getDeckSize());
             for (int i = 0; i < TABLE.getDeckSize(); i++) {
                 TABLE.Draw();
                 if (TABLE.hasCardTop[0][1])
                     if (TABLE.up[0].getValue() == num) {
-                        System.out.println(num);
-                        TABLE.DrawToFoundation(TABLE.up[0].getSuit());
+                        //System.out.println(num);
+                        if (TABLE.DrawToFoundation(TABLE.up[0].getSuit()))
+                            updateHistory();
                     }
             }
             TABLE.Draw();
         }
         if (rec > 1)
-            DrawtoFoundationAutoSort(rec - 1);
+            DrawToFoundationAutoSort(rec - 1);
     }
     public void TableToFoundationAutoSort(int rec){
         for (int i = 0; i < 7; i++) {
             int fromRow = TABLE.findFirstCard(i);
             if (fromRow >= 0)
-                TABLE.TableIntoFoundation(TABLE.findFirstCard(i), i, TABLE.cardsOnTable[TABLE.findFirstCard(i)][i].getSuit());
+                if (TABLE.TableToFoundation(TABLE.findFirstCard(i), i, TABLE.cardsOnTable[TABLE.findFirstCard(i)][i].getSuit()))
+                    updateHistory();
         }
+
         if (rec > 1)
             TableToFoundationAutoSort(rec - 1);
     }
@@ -565,7 +522,9 @@ public class GamePanel extends JPanel{
             for (int fromCol = 0; fromCol < 7; fromCol++)
                 for (int toCol = 0; toCol < 7; toCol++)
                     if (TABLE.hasCardTable[fromRow][fromCol])
-                        TABLE.moveCard(fromRow, fromCol, toCol);
+                        if (TABLE.TableToTable(fromRow, fromCol, toCol))
+                            updateHistory();
+
         if (rec > 0)
             TableToFoundationAutoSort(rec - 1);
     }
@@ -573,7 +532,8 @@ public class GamePanel extends JPanel{
         for (int i = 0; i < TABLE.getDeckSize(); i++) {
             TABLE.Draw();
             for (int toCol = 0; toCol < 7; toCol++)
-                TABLE.DrawToTable(toCol);
+                if (TABLE.DrawToTable(toCol))
+                    updateHistory();
         }
         TABLE.Draw();
         if (rec > 0)
@@ -582,8 +542,10 @@ public class GamePanel extends JPanel{
     public void FoundationToTableAutoSort(int rec){
         for (int pile = 1; pile < 5; pile++){
             for(int toCol = 0; toCol < 7; toCol++)
-                TABLE.FoundationToTable(pile, toCol);
+                if(TABLE.FoundationToTable(pile, toCol))
+                    updateHistory();
         }
+
         if (rec > 0)
             FoundationToTableAutoSort(rec - 1);
     }
